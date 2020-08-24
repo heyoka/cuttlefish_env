@@ -319,6 +319,23 @@ load_conf(ParsedArgs) ->
             GoodConf
     end.
 
+change_conf(Conf) ->
+    change_conf(Conf, ?ENVS).
+
+change_conf(Conf, []) ->
+    Conf;
+change_conf(Conf, [{Env, Key} | Envs]) ->
+    case os:getenv(Env) of
+        false -> change_conf(Conf, Envs);
+        Value ->
+            NKey = cuttlefish_variable:tokenize(Key),
+            NConf = case lists:keyfind(NKey, 1, Conf) of
+                        false -> Conf ++ [{NKey, Value}];
+                        _ -> lists:keyreplace(NKey, 1, Conf, {NKey, Value})
+                    end,
+            change_conf(NConf, Envs)
+    end.
+
 -spec writable_destination_path([proplists:property()]) -> file:filename() | error.
 writable_destination_path(ParsedArgs) ->
     EtcDir = proplists:get_value(etc_dir, ParsedArgs),
@@ -362,7 +379,7 @@ engage_cuttlefish(ParsedArgs) ->
     lager:debug("Generating config in: ~p", [Destination]),
 
     Schema = load_schema(ParsedArgs),
-    Conf = load_conf(ParsedArgs),
+    Conf = change_conf(load_conf(ParsedArgs)),
     NewConfig = case cuttlefish_generator:map(Schema, Conf) of
         {error, Phase, {errorlist, Errors}} ->
             lager:error("Error generating configuration in phase ~s", [Phase]),
