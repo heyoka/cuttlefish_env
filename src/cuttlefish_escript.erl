@@ -317,7 +317,7 @@ load_schema(ParsedArgs) ->
 
 load_conf(ParsedArgs) ->
     ConfFiles = proplists:get_all_values(conf_file, ParsedArgs),
-    lager:debug("ConfFiles: ~p", [ConfFiles]),
+    lager:notice("ConfFiles: ~p", [ConfFiles]),
     case cuttlefish_conf:files(ConfFiles) of
         {errorlist, Errors} ->
             _ = [ lager:error(cuttlefish_error:xlate(E)) ||
@@ -335,8 +335,11 @@ change_conf(Conf, []) ->
     Conf;
 change_conf(Conf, [{Env, Key} | Envs]) ->
     case os:getenv(Env) of
-        false -> change_conf(Conf, Envs);
+        false ->
+            lager:notice("ENV: ~p(~p) not set",[Env, Key]),
+            change_conf(Conf, Envs);
         Value ->
+            lager:notice("ENV: ~p(~p) is set to: ~p",[Env, Key, Value]),
             NKey = cuttlefish_variable:tokenize(Key),
             NConf = case lists:keyfind(NKey, 1, Conf) of
                         false -> Conf ++ [{NKey, Value}];
