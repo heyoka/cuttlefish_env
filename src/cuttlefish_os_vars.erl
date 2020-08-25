@@ -65,7 +65,7 @@ overlay(GeneratedConfig) ->
     cuttlefish_util:replace_proplist_value(faxe, Updated, GeneratedConfig).
 
 env_key(ConfigElementName) ->
-    string:replace(ConfigElementName, ["."], ["_"]).
+    string:to_upper(lists:flatten(string:replace(ConfigElementName, ".", "_", all))).
 
 -ifdef(TEST).
 
