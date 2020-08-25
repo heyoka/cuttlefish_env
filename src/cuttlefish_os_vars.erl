@@ -22,7 +22,7 @@
 
 -module(cuttlefish_os_vars).
 
--export([overlay/2, overlay/1]).
+-export([overlay/1]).
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
@@ -30,64 +30,70 @@
 
 %% @doc this function overlays the values in proplist 'AdvancedConfig'
 %% on top of 'GeneratedConfig'
-overlay(GeneratedConfig, AdvancedConfig) ->
-    lists:foldl(
-        fun({ApplicationName, ApplicationConfig}, OuterAcc) ->
-            GeneratedApplicationConfig = proplists:get_value(ApplicationName, GeneratedConfig, []),
-            Updated = lists:foldl(
-                fun({ConfigElementName, ConfigElement}, Acc) ->
-                    cuttlefish_util:replace_proplist_value(ConfigElementName, ConfigElement, Acc)
-                end,
-                GeneratedApplicationConfig,
-                ApplicationConfig),
-            cuttlefish_util:replace_proplist_value(ApplicationName, Updated, OuterAcc)
-        end,
-        GeneratedConfig,
-        AdvancedConfig).
+%%overlay(GeneratedConfig, AdvancedConfig) ->
+%%    lists:foldl(
+%%        fun({ApplicationName, ApplicationConfig}, OuterAcc) ->
+%%            GeneratedApplicationConfig = proplists:get_value(ApplicationName, GeneratedConfig, []),
+%%            Updated = lists:foldl(
+%%                fun({ConfigElementName, ConfigElement}, Acc) ->
+%%                    cuttlefish_util:replace_proplist_value(ConfigElementName, ConfigElement, Acc)
+%%                end,
+%%                GeneratedApplicationConfig,
+%%                ApplicationConfig),
+%%            cuttlefish_util:replace_proplist_value(ApplicationName, Updated, OuterAcc)
+%%        end,
+%%        GeneratedConfig,
+%%        AdvancedConfig).
 
 %% replace with OS vars
 overlay(GeneratedConfig) ->
-    GeneratedApplicationConfig = proplists:get_value(faxe, GeneratedConfig, []),
-    Updated = lists:foldl(
-        fun({ConfigElementName, ConfigElement}, Acc) ->
-            %% check for os var and replace when set
-            EnvKey = env_key(ConfigElementName),
-            case os:getenv() of
-                false -> ok;
-                EnvValue ->
-                    cuttlefish_util:replace_proplist_value(ConfigElementName, EnvValue, Acc)
-            end
-%%            cuttlefish_util:replace_proplist_value(ConfigElementName, ConfigElement, Acc)
+    lists:foldl(
+        fun({ApplicationName, GeneratedApplicationConfig}, OuterAcc) ->
+%%            io:format("~nApp: ~p, Config: ~p~n", [ApplicationName, GeneratedApplicationConfig]),
+%%            GeneratedApplicationConfig = proplists:get_value(ApplicationName, GeneratedConfig, []),
+            Updated = lists:foldl(
+                fun({ConfigElementName, _ConfigElement}, Acc) ->
+                    %% check for os var and replace when set
+                    EnvKey = env_key(ApplicationName, ConfigElementName),
+%%                    io:format("~nEnvKey: ~p~n",[EnvKey]),
+                    case os:getenv(EnvKey) of
+                        false ->
+                            Acc;
+                        EnvValue ->
+                            io:format(" -- we have a value: ~p~n",[EnvValue]),
+                            cuttlefish_util:replace_proplist_value(ConfigElementName, EnvValue, Acc)
+                    end
+                end,
+                GeneratedApplicationConfig,
+                GeneratedApplicationConfig
+            ),
+            cuttlefish_util:replace_proplist_value(ApplicationName, Updated, OuterAcc)
         end,
-        [],
-        GeneratedApplicationConfig
-    ),
-    cuttlefish_util:replace_proplist_value(faxe, Updated, GeneratedConfig).
+        GeneratedConfig, GeneratedConfig).
 
-env_key(ConfigElementName) ->
-    string:to_upper(lists:flatten(string:replace(ConfigElementName, ".", "_", all))).
+env_key(ApplicationName, ConfigElementName) ->
+    string:to_upper(
+        atom_to_list(ApplicationName) ++ "_" ++
+            lists:flatten(string:replace(atom_to_list(ConfigElementName), ".", "_", all))).
 
 -ifdef(TEST).
 
-overlay_test() ->
+overlay_os_vars_test() ->
     GeneratedConfig = [
         {app1, [{'setting1.1', "value1.1"}]},
         {app2, [{'setting2.1', "value2.1"}]},
         {app3, [{'setting3.1', [{"blah", "blah"}, {"blarg", "blarg"}]}]}
     ],
 
-    AdvancedConfig = [
-        {app3, [{'setting3.1', i_dont_care}]},
-        {app4, [{'some_unschemad_thing', 'like_a_penguin'}]}
-    ],
+    os:set_env_var("APP2_SETTING2_1", "set_by_env_var"),
+    os:set_env_var("APP2_SETTING2_2", "set_by_env_var2"),
 
     Expected = [
         {app1, [{'setting1.1', "value1.1"}]},
-        {app2, [{'setting2.1', "value2.1"}]},
-        {app3, [{'setting3.1', i_dont_care}]},
-        {app4, [{'some_unschemad_thing', 'like_a_penguin'}]}
+        {app2, [{'setting2.1', "set_by_env_var"}]},
+        {app3, [{'setting3.1', [{"blah", "blah"}, {"blarg", "blarg"}]}]}
     ],
-    NewConfig = overlay(GeneratedConfig, AdvancedConfig),
+    NewConfig = overlay(GeneratedConfig),
 
     ?assertEqual(Expected, NewConfig),
 

@@ -25,15 +25,6 @@
 -define(FORMAT(Str, Args), io_lib:format(Str, Args)).
 -export([main/1]).
 
--define(ENVS, [{"EMQX_NODE_NAME", "nodename"},
-    {"EMQX_NODE_COOKIE", "node.cookie"},
-    {"EMQX_MAX_PORTS", "node.max_ports"},
-    {"EMQX_MAX_PACKET_SIZE", "mqtt.max_packet_size"},
-    {"EMQX_TCP_PORT", "listener.tcp.external"},
-    {"EMQX_SSL_PORT", "listener.ssl.external"},
-    {"EMQX_WS_PORT", "listener.ws.external"},
-    {"EMQX_WSS_PORT", "listener.wss.external"}]).
-
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
 -endif.
@@ -328,25 +319,6 @@ load_conf(ParsedArgs) ->
             GoodConf
     end.
 
-change_conf(Conf) ->
-    change_conf(Conf, ?ENVS).
-
-change_conf(Conf, []) ->
-    Conf;
-change_conf(Conf, [{Env, Key} | Envs]) ->
-    case os:getenv(Env) of
-        false ->
-            lager:notice("ENV: ~p(~p) not set",[Env, Key]),
-            change_conf(Conf, Envs);
-        Value ->
-            lager:notice("ENV: ~p(~p) is set to: ~p",[Env, Key, Value]),
-            NKey = cuttlefish_variable:tokenize(Key),
-            NConf = case lists:keyfind(NKey, 1, Conf) of
-                        false -> Conf ++ [{NKey, Value}];
-                        _ -> lists:keyreplace(NKey, 1, Conf, {NKey, Value})
-                    end,
-            change_conf(NConf, Envs)
-    end.
 
 -spec writable_destination_path([proplists:property()]) -> file:filename() | error.
 writable_destination_path(ParsedArgs) ->
@@ -391,7 +363,7 @@ engage_cuttlefish(ParsedArgs) ->
     lager:debug("Generating config in: ~p", [Destination]),
 
     Schema = load_schema(ParsedArgs),
-    Conf = change_conf(load_conf(ParsedArgs)),
+    Conf = load_conf(ParsedArgs),
     NewConfig = case cuttlefish_generator:map(Schema, Conf) of
         {error, Phase, {errorlist, Errors}} ->
             lager:error("Error generating configuration in phase ~s", [Phase]),
@@ -402,7 +374,7 @@ engage_cuttlefish(ParsedArgs) ->
     %% advanced config
     AdvancedConfigFile = proplists:get_value(advanced_conf_file, ParsedArgs, filename:join(EtcDir, "advanced.config")),
     lager:debug("AdvancedConfigFile: ~p", [AdvancedConfigFile]),
-    FinalConfig = case filelib:is_file(AdvancedConfigFile) of
+    WithAdvanced = case filelib:is_file(AdvancedConfigFile) of
         true ->
             lager:info("advanced config file is detected at ~s, overlaying proplists", [AdvancedConfigFile]),
             case file:consult(AdvancedConfigFile) of
@@ -421,7 +393,7 @@ engage_cuttlefish(ParsedArgs) ->
     end,
 
     %% OS Environment vars will overwrite matching config vals
-
+    FinalConfig = cuttlefish_os_vars:overlay(WithAdvanced),
 
     case FinalConfig of
         {error, _X} ->
