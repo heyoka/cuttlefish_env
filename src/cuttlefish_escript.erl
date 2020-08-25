@@ -25,6 +25,15 @@
 -define(FORMAT(Str, Args), io_lib:format(Str, Args)).
 -export([main/1]).
 
+-define(ENVS, [{"EMQX_NODE_NAME", "nodename"},
+    {"EMQX_NODE_COOKIE", "node.cookie"},
+    {"EMQX_MAX_PORTS", "node.max_ports"},
+    {"EMQX_MAX_PACKET_SIZE", "mqtt.max_packet_size"},
+    {"EMQX_TCP_PORT", "listener.tcp.external"},
+    {"EMQX_SSL_PORT", "listener.ssl.external"},
+    {"EMQX_WS_PORT", "listener.ws.external"},
+    {"EMQX_WSS_PORT", "listener.wss.external"}]).
+
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
 -endif.
