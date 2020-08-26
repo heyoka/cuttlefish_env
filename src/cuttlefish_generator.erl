@@ -714,7 +714,7 @@ add_defaults_test() ->
     ],
 
     DConf = add_defaults(Conf, Mappings),
-    io:format("DConf: ~p~n", [DConf]),
+%%    io:format("DConf: ~p~n", [DConf]),
     ?assertEqual(9, length(DConf)),
     ?assertEqual("q",               proplists:get_value(["a","b","c"], DConf)),
     ?assertNotEqual("l",            proplists:get_value(["a","c","d"], DConf)),

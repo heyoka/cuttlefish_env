@@ -100,9 +100,8 @@ map_os_vars_test() ->
         {["app2", "setting2", "1"], "value2.2"}
 
     ],
-
-    os:set_env_var("APP2_SETTING2_1", "set_by_env_var"),
-    os:set_env_var("APP2_SETTING2_2", "set_by_env_var2"),
+    os:set_env_var("_APP2_SETTING2_1", "set_by_env_var"),
+    os:set_env_var("_APP2_SETTING2_2", "set_by_env_var2"),
 
     Expected = [
         {["app1", "setting1", "1"], "value1.1"},
