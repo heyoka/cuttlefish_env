@@ -70,7 +70,7 @@ build(Conf, {_Translations, Mappings, _Validators} = _Schema, AdvConfig) ->
         [],
         EffectiveConfig
     ),
-
+%%    lager:error("EffectiveConfig Output: ~p",[EffectiveOutput]),
     case AdvConfig of
         [] -> EffectiveOutput;
         _ ->

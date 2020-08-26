@@ -22,7 +22,7 @@
 
 -module(cuttlefish_os_vars).
 
--export([overlay/1]).
+-export([overlay/1, check/0, map/1]).
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
@@ -45,6 +45,25 @@
 %%        GeneratedConfig,
 %%        AdvancedConfig).
 
+map(Config) ->
+    Updated = lists:foldl(
+        fun({ConfigElementName, _ConfigElement}, Acc) ->
+            %% check for os var and replace when set
+            EnvKey = env_key(ConfigElementName),
+            lager:notice("~nEnvKey: ~p~n",[EnvKey]),
+            case os:getenv(EnvKey) of
+                false ->
+                    Acc;
+                EnvValue ->
+                    io:format(" -- we have a value: ~p~n",[EnvValue]),
+                    cuttlefish_util:replace_proplist_value(ConfigElementName, EnvValue, Acc)
+            end
+        end,
+        Config,
+        Config
+    ),
+    Updated.
+
 %% replace with OS vars
 overlay(GeneratedConfig) ->
     lists:foldl(
@@ -55,7 +74,7 @@ overlay(GeneratedConfig) ->
                 fun({ConfigElementName, _ConfigElement}, Acc) ->
                     %% check for os var and replace when set
                     EnvKey = env_key(ApplicationName, ConfigElementName),
-%%                    io:format("~nEnvKey: ~p~n",[EnvKey]),
+                    io:format("~nEnvKey: ~p~n",[EnvKey]),
                     case os:getenv(EnvKey) of
                         false ->
                             Acc;
@@ -71,12 +90,39 @@ overlay(GeneratedConfig) ->
         end,
         GeneratedConfig, GeneratedConfig).
 
+env_key([_First|_]=ConfigElementName) when is_list(_First) ->
+    string:to_upper(
+        lists:flatten(lists:join("_", ConfigElementName))
+    ).
 env_key(ApplicationName, ConfigElementName) ->
     string:to_upper(
         atom_to_list(ApplicationName) ++ "_" ++
             lists:flatten(string:replace(atom_to_list(ConfigElementName), ".", "_", all))).
 
+check() ->
+    env_key(["holy", "moly"]).
+
 -ifdef(TEST).
+
+map_os_vars_test() ->
+    GeneratedConfig = [
+        {["app1", "setting1", "1"], "value1.1"},
+        {["app2", "setting2", "1"], "value2.2"}
+
+    ],
+
+    os:set_env_var("APP2_SETTING2_1", "set_by_env_var"),
+    os:set_env_var("APP2_SETTING2_2", "set_by_env_var2"),
+
+    Expected = [
+        {["app1", "setting1", "1"], "value1.1"},
+        {["app2", "setting2", "1"], "set_by_env_var"}
+    ],
+    NewConfig = map(GeneratedConfig),
+
+    ?assertEqual(Expected, NewConfig),
+
+    ok.
 
 overlay_os_vars_test() ->
     GeneratedConfig = [

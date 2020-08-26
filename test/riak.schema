@@ -13,6 +13,12 @@
   Size > 1 andalso (Size band (Size-1) =:= 0)
  end}.
 
+
+{mapping, "my_os_var", "riak_core.my_os_var", [
+  {datatype, integer},
+  {default, 33}
+]}.
+
 %% Slightly more complex mapping with translation layer
 %% @doc enable active anti-entropy subsystem
 {mapping, "anti_entropy", "riak_kv.anti_entropy", [

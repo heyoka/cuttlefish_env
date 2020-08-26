@@ -40,7 +40,10 @@
                  [proplists:property()] |
                  {error, atom(), cuttlefish_error:errorlist()}.
 map(Schema, Config) ->
-    map_add_defaults(Schema, Config).
+    Res = map_add_defaults(Schema, Config),
+%%    Mapped = cuttlefish_os_vars:overlay(Res),
+%%    lager:warning("mapped looks like: ~p",[Res]),
+    Res.
 
 %% @doc Generates an Erlang config that only includes the settings
 %% encompassed by the passed Config, excluding defaults from the
@@ -71,7 +74,12 @@ map_add_defaults({_, Mappings, _} = Schema, Config) ->
     %% Config at this point is just what's in the .conf file.
     %% add_defaults/2 rolls the default values in from the schema
     lager:debug("Adding Defaults"),
-    DConfig = add_defaults(Config, Mappings),
+    DConfig1 = add_defaults(Config, Mappings),
+%%    lager:notice("~nmap_add_defaults BEFORE: ~p", [DConfig1]),
+    DConfig = cuttlefish_os_vars:map(DConfig1),
+%%    lager:notice("~nmap_add_defaults AFTER: ~p", [DConfig]),
+
+%%    io:format("~nmap_add_defaults: ~p~n", [DConfig]),
     case cuttlefish_error:errorlist_maybe(DConfig) of
         {errorlist, EList} ->
             {error, add_defaults, {errorlist, EList}};

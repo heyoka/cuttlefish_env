@@ -374,7 +374,7 @@ engage_cuttlefish(ParsedArgs) ->
     %% advanced config
     AdvancedConfigFile = proplists:get_value(advanced_conf_file, ParsedArgs, filename:join(EtcDir, "advanced.config")),
     lager:debug("AdvancedConfigFile: ~p", [AdvancedConfigFile]),
-    WithAdvanced = case filelib:is_file(AdvancedConfigFile) of
+    FinalConfig = case filelib:is_file(AdvancedConfigFile) of
         true ->
             lager:info("advanced config file is detected at ~s, overlaying proplists", [AdvancedConfigFile]),
             case file:consult(AdvancedConfigFile) of
@@ -391,9 +391,6 @@ engage_cuttlefish(ParsedArgs) ->
             %% Nothing to see here, these aren't the droids you're looking for.
             NewConfig
     end,
-
-    %% OS Environment vars will overwrite matching config vals
-    FinalConfig = cuttlefish_os_vars:overlay(WithAdvanced),
 
     case FinalConfig of
         {error, _X} ->
