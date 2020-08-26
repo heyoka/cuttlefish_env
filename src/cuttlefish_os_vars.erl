@@ -29,10 +29,15 @@
 -endif.
 
 map(Config) ->
+    Prefix =
+    case catch release_handler:which_releases(permanent) of
+        [{ReleaseName, _Version, _Applications, _Type}] -> ReleaseName;
+        _ -> ""
+    end,
     Updated = lists:foldl(
         fun({ConfigElementName, _ConfigElement}, Acc) ->
             %% check for os var and replace when set
-            EnvKey = env_key(ConfigElementName),
+            EnvKey = env_key(Prefix, ConfigElementName),
 %%            lager:notice("~nEnvKey: ~p~n",[EnvKey]),
             case os:getenv(EnvKey) of
                 false ->
@@ -73,17 +78,19 @@ overlay(GeneratedConfig) ->
         end,
         GeneratedConfig, GeneratedConfig).
 
-env_key([_First|_]=ConfigElementName) when is_list(_First) ->
+env_key(ReleaseName, [_First|_]=ConfigElementName) when is_list(ReleaseName) andalso is_list(_First) ->
     string:to_upper(
+        ReleaseName ++ "_" ++
         lists:flatten(lists:join("_", ConfigElementName))
-    ).
-env_key(ApplicationName, ConfigElementName) ->
+    );
+env_key(ApplicationName, ConfigElementName) when is_atom(ApplicationName) ->
     string:to_upper(
         atom_to_list(ApplicationName) ++ "_" ++
             lists:flatten(string:replace(atom_to_list(ConfigElementName), ".", "_", all))).
 
+
 check() ->
-    env_key(["holy", "moly"]).
+    env_key("faxe", ["holy", "moly"]).
 
 -ifdef(TEST).
 
