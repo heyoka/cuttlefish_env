@@ -28,34 +28,17 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
-%% @doc this function overlays the values in proplist 'AdvancedConfig'
-%% on top of 'GeneratedConfig'
-%%overlay(GeneratedConfig, AdvancedConfig) ->
-%%    lists:foldl(
-%%        fun({ApplicationName, ApplicationConfig}, OuterAcc) ->
-%%            GeneratedApplicationConfig = proplists:get_value(ApplicationName, GeneratedConfig, []),
-%%            Updated = lists:foldl(
-%%                fun({ConfigElementName, ConfigElement}, Acc) ->
-%%                    cuttlefish_util:replace_proplist_value(ConfigElementName, ConfigElement, Acc)
-%%                end,
-%%                GeneratedApplicationConfig,
-%%                ApplicationConfig),
-%%            cuttlefish_util:replace_proplist_value(ApplicationName, Updated, OuterAcc)
-%%        end,
-%%        GeneratedConfig,
-%%        AdvancedConfig).
-
 map(Config) ->
     Updated = lists:foldl(
         fun({ConfigElementName, _ConfigElement}, Acc) ->
             %% check for os var and replace when set
             EnvKey = env_key(ConfigElementName),
-            lager:notice("~nEnvKey: ~p~n",[EnvKey]),
+%%            lager:notice("~nEnvKey: ~p~n",[EnvKey]),
             case os:getenv(EnvKey) of
                 false ->
                     Acc;
                 EnvValue ->
-                    io:format(" -- we have a value: ~p~n",[EnvValue]),
+%%                    io:format(" -- we have a value: ~p~n",[EnvValue]),
                     cuttlefish_util:replace_proplist_value(ConfigElementName, EnvValue, Acc)
             end
         end,
@@ -74,12 +57,12 @@ overlay(GeneratedConfig) ->
                 fun({ConfigElementName, _ConfigElement}, Acc) ->
                     %% check for os var and replace when set
                     EnvKey = env_key(ApplicationName, ConfigElementName),
-                    io:format("~nEnvKey: ~p~n",[EnvKey]),
+%%                    io:format("~nEnvKey: ~p~n",[EnvKey]),
                     case os:getenv(EnvKey) of
                         false ->
                             Acc;
                         EnvValue ->
-                            io:format(" -- we have a value: ~p~n",[EnvValue]),
+%%                            io:format(" -- we have a value: ~p~n",[EnvValue]),
                             cuttlefish_util:replace_proplist_value(ConfigElementName, EnvValue, Acc)
                     end
                 end,
