@@ -31,8 +31,11 @@
 map(Config) ->
     Prefix =
     case catch release_handler:which_releases(permanent) of
-        [{ReleaseName, _Version, _Applications, _Type}] -> ReleaseName;
-        _ -> ""
+        [{ReleaseName, _Version, _Applications, _Type}] = Res ->
+            lager:notice("permanent releases: ~p",[Res]),
+            ReleaseName;
+        _ ->
+            ""
     end,
     Updated = lists:foldl(
         fun({ConfigElementName, _ConfigElement}, Acc) ->
