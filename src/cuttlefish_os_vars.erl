@@ -29,38 +29,13 @@
 -endif.
 
 map(Config) ->
-
-
-
     {ok, Dir} = file:get_cwd(),
     Prefix = lists:last(string:split(Dir, "/", trailing)),
-%%    case catch init:script_id() of
-%%        {"Erlang/OTP", _Vsn} ->
-%%            "";
-%%        {ReleaseName, _Vsn} = Res ->
-%%            lager:notice("release (init_script): ~p",[Res]),
-%%            ReleaseName;
-%%        What ->
-%%            lager:error("permanent releases: ~p",[What]),
-%%            ""
-%%    end,
-
-%%    lager:warning("prefix is : ~p",[Prefix]),
-
-%%    Prefix =
-%%    case catch release_handler:which_releases() of
-%%        [{ReleaseName, _Version, _Applications, _Type}] = Res ->
-%%            lager:notice("permanent releases: ~p",[Res]),
-%%            ReleaseName;
-%%        _ ->
-%%            lager:error("permanent releases: ~p",[What]),
-%%            ""
-%%    end,
     Updated = lists:foldl(
         fun({ConfigElementName, _ConfigElement}, Acc) ->
             %% check for os var and replace when set
             EnvKey = env_key(Prefix, ConfigElementName),
-            lager:notice("~nEnvKey: ~p~n",[EnvKey]),
+            lager:debug("~nEnvKey: ~p~n",[EnvKey]),
             case os:getenv(EnvKey) of
                 false ->
                     Acc;
