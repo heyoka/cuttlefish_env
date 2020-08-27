@@ -22,7 +22,7 @@
 
 -module(cuttlefish_os_vars).
 
--export([map/1]).
+-export([map/1, env_key/1]).
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
@@ -49,6 +49,11 @@ map(Config) ->
     ),
     Updated.
 
+
+env_key(ElementName) ->
+    {ok, Dir} = file:get_cwd(),
+    Prefix = lists:last(string:split(Dir, "/", trailing)),
+    env_key(Prefix, ElementName).
 
 env_key(ReleaseName, [_First|_]=ConfigElementName) when is_list(ReleaseName) andalso is_list(_First) ->
     string:to_upper(
