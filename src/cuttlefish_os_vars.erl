@@ -22,7 +22,7 @@
 
 -module(cuttlefish_os_vars).
 
--export([check/0, map/1]).
+-export([map/1]).
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
@@ -30,19 +30,22 @@
 
 map(Config) ->
 
-    Prefix =
-    case catch init:script_id() of
-        {"Erlang/OTP", _Vsn} ->
-            "";
-        {ReleaseName, _Vsn} = Res ->
-            lager:notice("release (init_script): ~p",[Res]),
-            ReleaseName;
-        What ->
-            lager:error("permanent releases: ~p",[What]),
-            ""
-    end,
 
-    lager:warning("script_id is : ~p",[Prefix]),
+
+    {ok, Dir} = file:get_cwd(),
+    Prefix = lists:last(string:split(Dir, "/", trailing)),
+%%    case catch init:script_id() of
+%%        {"Erlang/OTP", _Vsn} ->
+%%            "";
+%%        {ReleaseName, _Vsn} = Res ->
+%%            lager:notice("release (init_script): ~p",[Res]),
+%%            ReleaseName;
+%%        What ->
+%%            lager:error("permanent releases: ~p",[What]),
+%%            ""
+%%    end,
+
+%%    lager:warning("prefix is : ~p",[Prefix]),
 
 %%    Prefix =
 %%    case catch release_handler:which_releases() of
@@ -83,9 +86,6 @@ env_key(ApplicationName, ConfigElementName) when is_atom(ApplicationName) ->
             lists:flatten(string:replace(atom_to_list(ConfigElementName), ".", "_", all))).
 
 
-check() ->
-    env_key("faxe", ["holy", "moly"]).
-
 -ifdef(TEST).
 
 map_os_vars_test() ->
@@ -94,8 +94,8 @@ map_os_vars_test() ->
         {["app2", "setting2", "1"], "value2.2"}
 
     ],
-    os:set_env_var("_APP2_SETTING2_1", "set_by_env_var"),
-    os:set_env_var("_APP2_SETTING2_2", "set_by_env_var2"),
+    os:set_env_var("CUTTLEFISH_APP2_SETTING2_1", "set_by_env_var"),
+    os:set_env_var("CUTTLEFISH_APP2_SETTING2_2", "set_by_env_var2"),
 
     Expected = [
         {["app1", "setting1", "1"], "value1.1"},
