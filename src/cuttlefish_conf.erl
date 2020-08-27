@@ -170,9 +170,8 @@ generate_comments(M) ->
                  [ ?FMT("  - ~s", [pretty_datatype(DT)])
                    || DT <- cuttlefish_mapping:datatype(M)]],
 
-    Env = [ "", ?FMT("ENV: ~s", [cuttlefish_os_vars:env_key(cuttlefish_mapping:variable(M))])],
+    Env = [ "", ?FMT("ENV-Key: ~s", [cuttlefish_os_vars:env_key(cuttlefish_mapping:variable(M))])],
 
-  lager:error("env: ~s",[Env]),
     Doc = DocString ++ Default ++ Env ++ Datatypes,
     [ "## " ++ D || D <- Doc].
 
