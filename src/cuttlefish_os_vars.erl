@@ -22,7 +22,7 @@
 
 -module(cuttlefish_os_vars).
 
--export([overlay/1, check/0, map/1]).
+-export([check/0, map/1]).
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
@@ -34,7 +34,8 @@ map(Config) ->
         [{ReleaseName, _Version, _Applications, _Type}] = Res ->
             lager:notice("permanent releases: ~p",[Res]),
             ReleaseName;
-        _ ->
+        What ->
+            lager:error("permanent releases: ~p",[What]),
             ""
     end,
     Updated = lists:foldl(
@@ -55,31 +56,6 @@ map(Config) ->
     ),
     Updated.
 
-%% replace with OS vars
-overlay(GeneratedConfig) ->
-    lists:foldl(
-        fun({ApplicationName, GeneratedApplicationConfig}, OuterAcc) ->
-%%            io:format("~nApp: ~p, Config: ~p~n", [ApplicationName, GeneratedApplicationConfig]),
-%%            GeneratedApplicationConfig = proplists:get_value(ApplicationName, GeneratedConfig, []),
-            Updated = lists:foldl(
-                fun({ConfigElementName, _ConfigElement}, Acc) ->
-                    %% check for os var and replace when set
-                    EnvKey = env_key(ApplicationName, ConfigElementName),
-%%                    io:format("~nEnvKey: ~p~n",[EnvKey]),
-                    case os:getenv(EnvKey) of
-                        false ->
-                            Acc;
-                        EnvValue ->
-%%                            io:format(" -- we have a value: ~p~n",[EnvValue]),
-                            cuttlefish_util:replace_proplist_value(ConfigElementName, EnvValue, Acc)
-                    end
-                end,
-                GeneratedApplicationConfig,
-                GeneratedApplicationConfig
-            ),
-            cuttlefish_util:replace_proplist_value(ApplicationName, Updated, OuterAcc)
-        end,
-        GeneratedConfig, GeneratedConfig).
 
 env_key(ReleaseName, [_First|_]=ConfigElementName) when is_list(ReleaseName) andalso is_list(_First) ->
     string:to_upper(
@@ -116,25 +92,5 @@ map_os_vars_test() ->
 
     ok.
 
-overlay_os_vars_test() ->
-    GeneratedConfig = [
-        {app1, [{'setting1.1', "value1.1"}]},
-        {app2, [{'setting2.1', "value2.1"}]},
-        {app3, [{'setting3.1', [{"blah", "blah"}, {"blarg", "blarg"}]}]}
-    ],
-
-    os:set_env_var("APP2_SETTING2_1", "set_by_env_var"),
-    os:set_env_var("APP2_SETTING2_2", "set_by_env_var2"),
-
-    Expected = [
-        {app1, [{'setting1.1', "value1.1"}]},
-        {app2, [{'setting2.1', "set_by_env_var"}]},
-        {app3, [{'setting3.1', [{"blah", "blah"}, {"blarg", "blarg"}]}]}
-    ],
-    NewConfig = overlay(GeneratedConfig),
-
-    ?assertEqual(Expected, NewConfig),
-
-    ok.
 
 -endif.
