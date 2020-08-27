@@ -38,7 +38,7 @@ map(Config) ->
         fun({ConfigElementName, _ConfigElement}, Acc) ->
             %% check for os var and replace when set
             EnvKey = env_key(Prefix, ConfigElementName),
-%%            lager:notice("~nEnvKey: ~p~n",[EnvKey]),
+            lager:notice("~nEnvKey: ~p~n",[EnvKey]),
             case os:getenv(EnvKey) of
                 false ->
                     Acc;
