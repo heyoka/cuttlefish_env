@@ -43,7 +43,7 @@ cli_options() ->
  {conf_file,    $c, "conf_file",   string,             "a cuttlefish conf file path, multiple files allowed"},
  %% overrides advanced.config file path
  {advanced_conf_file, $a, "advanced_conf_file", string, "the advanced config file path"},
- {log_level,    $l, "log_level",   {string, "notice"}, "log level for cuttlefish output"},
+ {log_level,    $l, "log_level",   {string, "debug"}, "log level for cuttlefish output"},
  {print_schema, $p, "print",       undefined,          "prints schema mappings on stderr"},
  {max_history,  $m, "max_history", {integer, 3},       "the maximum number of generated config files to keep"}
 ].
