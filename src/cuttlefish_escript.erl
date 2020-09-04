@@ -263,7 +263,7 @@ generate(ParsedArgs) ->
             lager:info("No app.config or vm.args detected in ~s, activating cuttlefish", [EtcDir]),
             engage_cuttlefish(ParsedArgs)
     end,
-
+    lager:info("FilesToUse: ~p",[FilesToUse]),
     case FilesToUse of
         %% this is nice and all, but currently all error paths of engage_cuttlefish end with
         %% stop_deactivate() hopefully factor that to be cleaner.
@@ -351,7 +351,7 @@ engage_cuttlefish(ParsedArgs) ->
                       error;
                   Path -> Path
     end,
-
+%%    lager:debug("Absolute path (writeable dest path): ~p",[AbsPath]),
     Date = calendar:local_time(),
 
     DestinationFilename = filename_maker(proplists:get_value(dest_file, ParsedArgs), Date, "config"),
