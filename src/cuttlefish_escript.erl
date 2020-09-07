@@ -396,10 +396,8 @@ engage_cuttlefish(ParsedArgs) ->
         {error, _X} ->
             error;
         _ ->
-            lager:notice("config before: ~p",[FinalConfig]),
             FinalAppConfig = proplists:delete(vm_args, FinalConfig),
             FinalVMArgs = cuttlefish_vmargs:stringify(proplists:get_value(vm_args, FinalConfig)),
-            lager:notice("configs after: ~p ~p",[FinalAppConfig, FinalVMArgs]),
             %% Prune excess files
             MaxHistory = proplists:get_value(max_history, ParsedArgs, 3) - 1,
             prune(Destination, MaxHistory),
